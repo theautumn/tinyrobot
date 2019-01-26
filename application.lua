@@ -16,27 +16,29 @@ function get_from_api()
 	-- If no response from HTTP, flash the light.
 	    if (code < 0) then
 				print("HTTP request failed")
-				tmr.alarm(0, 500, 1, function ()
-				if status == gpio.LOW then
-					status = gpio.HIGH
-				else
-					status = gpio.LOW end
-
-				gpio.write(pin, status)
-end)--End flashy function
-
+				tmr.alarm(0, 500, 1, blink)
 	    else
 				local tabla = sjson.decode(data)
 
 				for k,v in pairs(tabla) do print(k,v) end
 				if tabla["app_running"] == true then
 					tmr.stop(0)
-					gpio.write(0, gpio.LOW)
+					gpio.write(pin, gpio.LOW)
 				end--end solid LED setting loop
 
 	    end--end data/no data loop
 	  end)--end data handling function
-end
+end--end get_from_api()
+
+
+function blink()
+				if status == gpio.LOW then
+					status = gpio.HIGH
+				else
+					status = gpio.LOW end
+
+				gpio.write(pin, status)
+end--End blinky function
 
 -- call get function after each 10 second
 -- any code below tmr.alarm only gets run once
