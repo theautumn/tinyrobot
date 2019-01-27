@@ -4,6 +4,7 @@ require "sjson"
 require "gpio"
 
 server = "http://192.168.0.204:5000/api/app" -- set server URL
+p_5xb = "http://192.168.0.204:5000/api/app/start/5xb?mode=demo&source=web"
 --server = "http://jsonplaceholder.typicode.com/users/1"
 led_pin = 0
 key_pin = 1
@@ -40,7 +41,7 @@ function blink()
       status = gpio.LOW end
    
    gpio.write(led_pin, status)
-end--End blinky function
+end--end blinky function
 
 debouncer = 4
 
@@ -52,7 +53,7 @@ poll = function()
    end
    
    if debouncer == 0 then
-			print("BUTTON PRESSED MY DUDE")
+      http.post(p_5xb)
    end
 end
 
