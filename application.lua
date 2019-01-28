@@ -4,7 +4,8 @@ require "sjson"
 require "gpio"
 
 server = "http://192.168.0.204:5000/api/app" -- set server URL
-p_5xb = "http://192.168.0.204:5000/api/app/start/5xb?mode=demo&source=web"
+r_5xb = "http://192.168.0.204:5000/api/app/start/5xb?mode=demo"
+s_5xb = "http://192.168.0.204:5000/api/app/stop/5xb"
 --server = "http://jsonplaceholder.typicode.com/users/1"
 led_pin = 0
 key_pin = 1
@@ -29,8 +30,10 @@ function get_from_api()
 	     t_blink:stop()
         if tabla["xb5_running"] == true then	 
 				gpio.write(led_pin, gpio.LOW)
+				running = true --local var for button polling decision
 	     else
 				gpio.write(led_pin, gpio.HIGH)
+				running = false
 	     end
 	  end--end solid LED setting loop
 	  
@@ -39,7 +42,7 @@ function get_from_api()
 end--end get_from_api()
 
 
-function blink()
+function blink()--blink led
    if status == gpio.LOW then
       status = gpio.HIGH
    else
@@ -50,7 +53,7 @@ end--end blinky function
 
 debouncer = 4
 
-poll = function()
+poll = function()--poll button and do action
    if gpio.read(key_pin) == gpio.LOW then
       debouncer = debouncer - 1
    else
@@ -58,7 +61,12 @@ poll = function()
    end
    
    if debouncer == 0 then
-      http.post(p_5xb)
+	   if running == false then
+		   http.post(r_5xb)
+		else
+			http.post(s_5xb)
+		end
+
    end
 end
 
@@ -72,5 +80,5 @@ t_blink:register(500, tmr.ALARM_AUTO, blink)
 -- call get function after each 10 second
 -- any code below tmr.alarm only gets run once
 t_api = tmr.create()
-t_api:register(5000, tmr.ALARM_AUTO, get_from_api)
+t_api:register(1000, tmr.ALARM_AUTO, get_from_api)
 t_api:start()
