@@ -1,8 +1,6 @@
 -- This file is only a placeholder.
--- Put your credentials here.
+-- Put your credentials here, and 
+-- rename the file to remove the underscore.
 
 SSID = "ssid"
 PASSWORD = "password"
-
-NODEX = 0
-NODEY = 0
