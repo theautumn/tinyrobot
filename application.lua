@@ -33,7 +33,7 @@ function get_from_api()
 	  local tabla = sjson.decode(data)
 	  api_dtimer = 3 
 	  for k,v in pairs(tabla) do print(k,v) end
-	  -- if the app is runing, turn off the light
+	  -- if api is accessible, stop error blinky
 	  if tabla["app_running"] == true then
 	     t_blink:stop()
               if tabla["xb5_running"] == true then	 
