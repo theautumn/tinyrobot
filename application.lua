@@ -12,7 +12,7 @@ led_pin = 2
 key_pin = 1
 status = gpio.LOW -- start with lamp off
 running = false --stores a local state as a buffer
-api_dbt = 3 -- debounces blink state 
+n_resp = 2 -- allows for a couple of no response before blink
 
 -- set pin modes
 gpio.mode(led_pin, gpio.OUTPUT)
@@ -25,14 +25,16 @@ function get_from_api()
        -- If no response from HTTP after 3 tries, flash the light.
        if (code < 0) then
           print("HTTP request failed")
-	  api_dbt = api_dbt - 1
-	  if api_dbt == 0 then
+	  n_resp = n_resp - 1
+	  if n_resp == 0 then
 	     t_blink:start()
+	     print("...blinking...")
 	  end
        else
 	  local tabla = sjson.decode(data)
-	  api_dbt = 3 
-	  for k,v in pairs(tabla) do print(k,v) end
+	  n_resp = 2 
+	  print("API Running " .. tostring(tabla["app_running"]))
+	  print("5XB Running " .. tostring(tabla["xb5_running"]))
 	  -- if api is accessible, stop error blinky
 	  if tabla["app_running"] == true then
 	     t_blink:stop()
