@@ -10,7 +10,7 @@ s_5xb = "http://192.168.0.204:5000/api/app/stop/5xb"
 
 led_pin = 2
 key_pin = 1
-status = gpio.HIGH -- start with lamp off
+status = gpio.HIGH -- flashes lamp momentarily on start
 running = false --stores a local state as a buffer
 n_resp = 2 -- allows for a couple of no response before blink
 
