@@ -10,7 +10,7 @@ s_5xb = "http://192.168.0.204:5000/api/app/stop/5xb"
 
 led_pin = 2
 key_pin = 1
-status = gpio.LOW -- start with lamp off
+status = gpio.HIGH -- start with lamp off
 running = false --stores a local state as a buffer
 n_resp = 2 -- allows for a couple of no response before blink
 
@@ -39,10 +39,10 @@ function get_from_api()
 	  if tabla["app_running"] == true then
 	     t_blink:stop()
               if tabla["xb5_running"] == true then	 
-                 gpio.write(led_pin, gpio.LOW) -- lamp ON
+                 gpio.write(led_pin, gpio.HIGH) -- lamp ON
                  running = true
 	      elseif tabla["xb5_running"] == false then
-                 gpio.write(led_pin, gpio.HIGH) -- lamp OFF
+                 gpio.write(led_pin, gpio.LOW) -- lamp OFF
                  running = false
               end --end switch checking loop
           end --end API running check loop
