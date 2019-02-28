@@ -36,15 +36,15 @@ function get_from_api()
 	  	end
 	else
 		nope = 2
-		t_blink:stop()  
-	  	local tabla = sjson.decode(data)
-	  	print("API Running " .. tostring(tabla["app_running"]))
-	  	print("5XB Running " .. tostring(tabla["xb5_running"]))
-	  	-- if api is accessible, stop error blinky
-	  	if tabla["app_running"] == true then
-	     		t_blink:stop()
-              		if tabla["xb5_running"] == true then	 
-                 		gpio.write(led_pin, gpio.HIGH) -- lamp ON
+		t_blink:stop()
+		local tabla = sjson.decode(data)
+		print("API Running " .. tostring(tabla["app_running"]))
+		print("5XB Running " .. tostring(tabla["xb5_running"]))
+		-- if api is accessible, stop error blinky
+		if tabla["app_running"] == true then
+			t_blink:stop()
+			if tabla["xb5_running"] == true then	 
+				gpio.write(led_pin, gpio.HIGH) -- lamp ON
 				running = true
 			elseif tabla["xb5_running"] == false then
 				gpio.write(led_pin, gpio.LOW) -- lamp OFF
@@ -53,7 +53,7 @@ function get_from_api()
 		end --end API running check loop
 	  
 	end --end data/no data loop
-   end) --end data handling function
+  end) --end data handling function
 end --end get_from_api()
 
 
