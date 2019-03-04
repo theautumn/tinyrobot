@@ -26,8 +26,8 @@ function get_from_api()
 	if (code < 0) then	-- if response empty
 		print("HTTP request failed")
 		if nope == 0 then	-- if debounce counter has run down
-			running, mode = t_blink:state()
-			if running == false then	-- if timer not already running
+			blinking, mode = t_blink:state()
+			if blinking == false then	-- if timer not already running
 				t_blink:start()
 				print("...blinking...")
 			end
@@ -43,7 +43,7 @@ function get_from_api()
 		-- if api is accessible, stop error blinky
 		if tabla["app_running"] == true then
 			t_blink:stop()
-			if tabla["xb5_running"] == true then	 
+			if tabla["xb5_running"] == true then
 				gpio.write(led_pin, gpio.HIGH) -- lamp ON
 				running = true
 			elseif tabla["xb5_running"] == false then
@@ -58,12 +58,13 @@ end --end get_from_api()
 
 
 function blink() --blink led
-   if status == gpio.LOW then
-      status = gpio.HIGH
-   else
-      status = gpio.LOW end
-   
-   gpio.write(led_pin, status)
+	if status == gpio.LOW then
+		status = gpio.HIGH
+	else
+		status = gpio.LOW
+	end
+ 
+	gpio.write(led_pin, status)
 end --end blinky function
 
 debouncer = 2
@@ -77,9 +78,9 @@ poll = function() --poll button and do action
    
    if debouncer == 0 then
       if running == false then
-	 http.post(r_5xb)
+		http.post(r_5xb)
       else
-	 http.post(s_5xb)
+		http.post(s_5xb)
       end
 
    end
