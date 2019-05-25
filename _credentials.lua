@@ -4,3 +4,7 @@
 
 SSID = "ssid"
 PASSWORD = "password"
+
+IP_ADDR = "0.0.0.0" 		-- static IP
+NETMASK = "255.255.255.0"	-- your subnet
+GATEWAY = "192.168.1.1"		-- your gateway
