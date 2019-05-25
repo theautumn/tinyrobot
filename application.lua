@@ -29,10 +29,11 @@ function get_from_api()
 			blinking, mode = t_blink:state()
 			if blinking == false then	-- if timer not already running
 				t_blink:start()
-				print("...blinking...")
+				print("Blink start issued!")
 			end
 		else
 			nope = nope - 1
+			print("Debounce counter: " .. tostring(nope))
 	  	end
 	else
 		nope = 2
@@ -40,9 +41,14 @@ function get_from_api()
 		local tabla = sjson.decode(data)
 		print("API Running " .. tostring(tabla["app_running"]))
 		print("5XB Running " .. tostring(tabla["xb5_running"]))
-		-- if api is accessible, stop error blinky
+
+		-- if api is accessible and blinky is still running, stop error blinky
 		if tabla["app_running"] == true then
-			t_blink:stop()
+			blinking, mode = t_blink:state()
+			if blinking == true then
+				t_blink:stop()
+				print("Blink *stop* issued")
+			end
 			if tabla["xb5_running"] == true then
 				gpio.write(led_pin, gpio.HIGH) -- lamp ON
 				running = true
@@ -51,7 +57,7 @@ function get_from_api()
 				running = false
 			end --end switch checking loop
 		end --end API running check loop
-	  
+
 	end --end data/no data loop
   end) --end data handling function
 end --end get_from_api()
@@ -63,7 +69,7 @@ function blink() --blink led
 	else
 		status = gpio.LOW
 	end
- 
+
 	gpio.write(led_pin, status)
 end --end blinky function
 
@@ -75,14 +81,13 @@ poll = function() --poll button and do action
    else
       debouncer = 2
    end
-   
+
    if debouncer == 0 then
       if running == false then
 		http.post(r_5xb)
       else
 		http.post(s_5xb)
       end
-
    end
 end
 
