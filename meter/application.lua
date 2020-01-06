@@ -13,8 +13,9 @@ DIAL_PIN = 2
 -- set some variables
 dialing = 0
 calls = 0
-maxcalls = 8
+maxcalls = 7
 maxdialing = 6
+apidebounce = 2
 
 -- set pwm feelings
 PWM_frequency = 1000 -- Set PWM frequency
@@ -32,11 +33,19 @@ function get_app_status()
 		-- If no response from HTTP after 3 tries, flash the light.
 		if (code < 0) then  -- if response empty
 			print("App status HTTP request failed")
-			pwm.setduty(CALL_PIN, 0)
-			pwm.setduty(DIAL_PINT, 0)
+			if apidebounce == 0 then
+					print("No response from API. Setting meters to 0.") 
+					pwm.setduty(CALL_PIN, 0)
+					pwm.setduty(DIAL_PIN, 0)
+			else
+				apidebounce = apidebounce - 1
+				print("Debounce counter:", apidebounce)
+			end
 		else
+			apidebounce = 2
 			switchtable = sjson.decode(data)
 			-- the API returns a table of tables so we have to use an index [1]
+			-- lets figure out the PWM setting for the busy-ness factor
 			calls = switchtable[1]["on_call"]
 			callpwm = (calls * 1023) / maxcalls
 			dialing = switchtable[1]["is_dialing"]
