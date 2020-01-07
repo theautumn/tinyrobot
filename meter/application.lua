@@ -7,24 +7,22 @@ require "pwm"
 server = "http://192.168.0.204:5000/api/switches/panel" -- set server URL
 
 -- set some pins
-CALL_PIN = 1
-DIAL_PIN = 2
+CALL_PIN = 2
+DIAL_PIN = 1
 
 -- set some variables
 dialing = 0
 calls = 0
-maxcalls = 7
-maxdialing = 6
+maxcalls = 8
+maxdialing = 8
 apidebounce = 2
 
 -- set pwm feelings
-PWM_frequency = 1000 -- Set PWM frequency
-PWM_duty = 0  -- Set PWM duty cycle in between 0-1023
-
-pwm.setup(CALL_PIN, PWM_frequency, PWM_duty)-- Setup PWM
-pwm.start(CALL_PIN)   -- Start PWM on call  pin
-pwm.setup(DIAL_PIN, PWM_frequency, PWM_duty)-- Setup PWM
-pwm.start(DIAL_PIN)   -- Start PWM on call  pin
+-- pwm.function(pin, frequency, duty cycle)
+pwm.setup(CALL_PIN, 1000, 0)
+pwm.start(CALL_PIN)
+pwm.setup(DIAL_PIN, 1000, 0)
+pwm.start(DIAL_PIN)
 
 function get_app_status()
 	print(">>>>>>>  get app status")
@@ -48,15 +46,15 @@ function get_app_status()
 			-- lets figure out the PWM setting for the busy-ness factor
 			calls = switchtable[1]["on_call"]
 			callpwm = (calls * 1023) / maxcalls
-			dialing = switchtable[1]["is_dialing"]
-			dialpwm = (dialing * 1023) / maxdialing
+--			dialing = switchtable[1]["is_dialing"]
+--			dialpwm = (dialing * 1023) / maxdialing
 
 			-- set some duty cycles
 			pwm.setduty(CALL_PIN, callpwm)
-			pwm.setduty(DIAL_PIN, dialpwm)
+--			pwm.setduty(DIAL_PIN, dialpwm)
 
 			print('Calls:', calls .. ' / ' .. callpwm)
-			print('Dialing:', dialing .. ' / ' .. dialpwm)
+--			print('Dialing:', dialing .. ' / ' .. dialpwm)
 		end --end switchtable checking loop
 	end) --end callback function
 end --end get_app_status()
