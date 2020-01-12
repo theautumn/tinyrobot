@@ -8,20 +8,28 @@ server = "http://192.168.0.204:5000/api/switches/panel" -- set server URL
 run_panel = "http://192.168.0.204:5000/api/app/start/panel?mode=demo&source=key"
 stop_panel = "http://192.168.0.204:5000/api/app/stop/panel?source=key"
 
-LED_PIN = 2
-KEY_PIN = 1
-HIGHVOL_PIN = 5
-status = gpio.HIGH -- flashes lamp momentarily on startup
+-- define some pins
+ST_KEY_PIN = 1 -- start key
+ST_LAMP_PIN = 2 -- start LAMP
+HT_KEY_PIN = 5 -- high traffic key
+HT_LAMP_LIN = 6 -- high traffic LAMP
+
+st_status = gpio.HIGH -- status of start lamp
+ht_status = gpio.HIGH -- status of high traffic lamp
 running = false --stores a local state as a buffer
 flash_countdown = 4 -- allows for a couple of no response before blink
-desired_traffic  = nil -- traffic volume controlled by secondary key
-last_traffic = ""
+desired_traffic  = "" -- traffic volume controlled by secondary key
+current_load  = "" -- traffic volume reported from API
 
--- set pin modes
-gpio.mode(LED_PIN, gpio.OUTPUT)
-gpio.mode(KEY_PIN, gpio.INPUT, gpio.PULLUP)
-gpio.mode(HIGHVOL_PIN, gpio.INPUT, gpio.PULLUP)
-gpio.write(LED_PIN, status)
+-- set key pin modes
+gpio.mode(ST_KEY_PIN, gpio.INPUT, gpio.PULLUP)
+gpio.mode(HT_KEY_PIN, gpio.INPUT, gpio.PULLUP)
+-- set LAMP pin modes
+gpio.mode(ST_LAMP_PIN, gpio.OUTPUT)
+gpio.mode(HT_LAMP_PIN, gpio.OUTPUT)
+-- flash momentarily before first successful GET
+gpio.write(ST_LAMP_PIN, st_status)
+gpio.write(HT_LAMP_PIN, ht_status)
 
 function get_app_status()
 	print(">>>>>>>  get app status")
@@ -53,14 +61,24 @@ function get_app_status()
 				t_blink:stop()
 				print("Blink *stop* issued!")
 			end
+
 			-- the API returns a table of tables so we have to use an index [1]
 			if switchtable[1]["running"] == true then
-				gpio.write(LED_PIN, gpio.HIGH) -- lamp ON
+				gpio.write(ST_LAMP_PIN, gpio.HIGH) -- lamp ON
 				running = true
 			elseif switchtable[1]["running"] == false then
-				gpio.write(LED_PIN, gpio.LOW) -- lamp OFF
+				gpio.write(ST_LAMP_PIN, gpio.LOW) -- lamp OFF
 				running = false
-			end --end switchtable checking loop
+			end --end running  checking loop
+
+			if switchtable[1]["traffic_load"] == "heavy" then
+				gpio.write(HT_LAMP_PIN, gpio.HIGH)
+				current_load = "heavy"
+			else
+				gpio.write(HT_LAMP_PIN, gpio.LOW)
+				current_load = "normal"
+			end -- end traffic load checking loop
+
 		end --end API running check loop
 	end) --end callback function
 end --end get_app_status()
@@ -79,8 +97,6 @@ function change_traffic_load(desired_load)
 		end
 	end
 	
-	local current_load = tostring(switchtable[1]["traffic_load"])
-
 	if current_load ~= desired_load then
 		print("Changing the business!")
 		http.request(server,	-- send kercheep a PATCH!
@@ -95,50 +111,48 @@ function change_traffic_load(desired_load)
 				end --end if
 			end) -- end PATCH callback function
 	end -- end main IF block
-	last_traffic = desired_load
 end --end GET callback function
 
 
 function blink() --blink led
-   if status == gpio.LOW then
-      status = gpio.HIGH
-   else
-      status = gpio.LOW end
+	if st_status == gpio.LOW then
+		st_status = gpio.HIGH
+	else
+		st_status = gpio.LOW
+	end
 
-   gpio.write(LED_PIN, status)
+	gpio.write(ST_LAMP_PIN, st_status)
 end --end blinky function
 
 debouncer = 2
-debouncerdeux = 2
 
 poll = function() --poll keys and do actions
 
-   if gpio.read(KEY_PIN) == gpio.LOW then
-      debouncer = debouncer - 1
-   else
-      debouncer = 2
-   end
+	if gpio.read(ST_KEY_PIN) == gpio.LOW then
+		debouncer = debouncer - 1
+	else
+		debouncer = 2
+	end
 
-   if debouncer == 0 then
-      if running == false then
+	if debouncer == 0 then
+		if running == false then
 			http.post(run_panel)
-      else
+		else
 			http.post(stop_panel)
-      end
-   end
+		end
+	end
 
 	-- check the traffic volume pin
-	if gpio.read(HIGHVOL_PIN) == gpio.HIGH then
-
-		 	desired_load = "normal"
+	if gpio.read(HT_KEY_PIN) == gpio.HIGH then
+		desired_load = "normal"
 	else
-			desired_load = "heavy"
+		desired_load = "heavy"
 	end
 
 	-- if the now value is different than before value, make an API call
-	if desired_load ~= last_traffic then
-			print("Traffic load changing to: " .. tostring(desired_load))
-		 	change_traffic_load(desired_load)
+	if desired_load ~= current_load then
+		print("Traffic load changing to: " .. tostring(desired_load))
+		change_traffic_load(desired_load)
  	end
 end
 
