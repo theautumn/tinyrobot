@@ -12,10 +12,10 @@ stop_panel = "http://192.168.0.204:5000/api/app/stop/panel?source=key"
 ST_KEY_PIN = 1 -- start key
 ST_LAMP_PIN = 2 -- start LAMP
 HT_KEY_PIN = 5 -- high traffic key
-HT_LAMP_LIN = 6 -- high traffic LAMP
+HT_LAMP_PIN = 6 -- high traffic LAMP
 
-st_status = gpio.HIGH -- status of start lamp
-ht_status = gpio.HIGH -- status of high traffic lamp
+st_status = gpio.LOW -- status of start lamp
+ht_status = gpio.LOW -- status of high traffic lamp
 running = false --stores a local state as a buffer
 flash_countdown = 4 -- allows for a couple of no response before blink
 desired_traffic  = "" -- traffic volume controlled by secondary key
@@ -64,18 +64,18 @@ function get_app_status()
 
 			-- the API returns a table of tables so we have to use an index [1]
 			if switchtable[1]["running"] == true then
-				gpio.write(ST_LAMP_PIN, gpio.HIGH) -- lamp ON
+				gpio.write(ST_LAMP_PIN, gpio.LOW) -- lamp ON
 				running = true
 			elseif switchtable[1]["running"] == false then
-				gpio.write(ST_LAMP_PIN, gpio.LOW) -- lamp OFF
+				gpio.write(ST_LAMP_PIN, gpio.HIGH) -- lamp OFF
 				running = false
 			end --end running  checking loop
 
 			if switchtable[1]["traffic_load"] == "heavy" then
-				gpio.write(HT_LAMP_PIN, gpio.HIGH)
+				gpio.write(HT_LAMP_PIN, gpio.LOW)
 				current_load = "heavy"
 			else
-				gpio.write(HT_LAMP_PIN, gpio.LOW)
+				gpio.write(HT_LAMP_PIN, gpio.HIGH)
 				current_load = "normal"
 			end -- end traffic load checking loop
 
