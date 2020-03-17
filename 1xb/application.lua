@@ -5,14 +5,14 @@ require "gpio"
 
 -- set up some endpoints
 server = "http://192.168.0.204:5000/api/app" -- set server URL
-r_5xb = "http://192.168.0.204:5000/api/app/start/5xb?mode=demo&source=key"
-s_5xb = "http://192.168.0.204:5000/api/app/stop/5xb?source=key"
+r_1xb = "http://192.168.0.204:5000/api/app/start/1xb?source=key"
+s_1xb = "http://192.168.0.204:5000/api/app/stop/1xb?source=key"
 
 led_pin = 2
 key_pin = 1
 status = gpio.HIGH -- flashes lamp momentarily on start
 running = false --stores a local state as a buffer
-nope = 2 -- allows for a couple of no response before blink
+nope = 4 -- allows for a couple of no response before blink
 
 -- set pin modes
 gpio.mode(led_pin, gpio.OUTPUT)
@@ -40,7 +40,7 @@ function get_from_api()
 		t_blink:stop()
 		local tabla = sjson.decode(data)
 		print("API Running " .. tostring(tabla["app_running"]))
-		print("5XB Running " .. tostring(tabla["xb5_running"]))
+		print("1XB Running " .. tostring(tabla["xb1_running"]))
 
 		-- if api is accessible and blinky is still running, stop error blinky
 		if tabla["app_running"] == true then
@@ -49,10 +49,10 @@ function get_from_api()
 				t_blink:stop()
 				print("Blink *stop* issued")
 			end
-			if tabla["xb5_running"] == true then
+			if tabla["xb1_running"] == true then
 				gpio.write(led_pin, gpio.HIGH) -- lamp ON
 				running = true
-			elseif tabla["xb5_running"] == false then
+			elseif tabla["xb1_running"] == false then
 				gpio.write(led_pin, gpio.LOW) -- lamp OFF
 				running = false
 			end --end switch checking loop
@@ -84,9 +84,9 @@ poll = function() --poll button and do action
 
 	if debouncer == 0 then
 		if running == false then
-			http.post(r_5xb)
+			http.post(r_1xb)
 		else
-			http.post(s_5xb)
+			http.post(s_1xb)
 		end
 	end
 end
