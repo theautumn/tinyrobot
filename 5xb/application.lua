@@ -5,7 +5,7 @@ require "gpio"
 
 -- set up some endpoints
 server = "http://192.168.0.204:5000/api/app" -- set server URL
-r_5xb = "http://192.168.0.204:5000/api/app/start/5xb?mode=demo&source=key"
+r_5xb = "http://192.168.0.204:5000/api/app/start/5xb?traffic_load=heavy&source=key"
 s_5xb = "http://192.168.0.204:5000/api/app/stop/5xb?source=key"
 
 led_pin = 2

@@ -5,7 +5,7 @@ require "gpio"
 
 -- set up some endpoints
 server = "http://192.168.0.204:5000/api/switches/panel" -- set server URL
-run_panel = "http://192.168.0.204:5000/api/app/start/panel?mode=demo&source=key"
+run_panel = "http://192.168.0.204:5000/api/app/start/panel?source=key"
 stop_panel = "http://192.168.0.204:5000/api/app/stop/panel?source=key"
 
 -- define some pins
