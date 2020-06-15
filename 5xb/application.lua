@@ -14,6 +14,9 @@ ST_LAMP_PIN = 2 -- start LAMP
 HT_KEY_PIN = 5 -- high traffic key
 HT_LAMP_PIN = 6 -- high traffic LAMP
 
+horizontal = gpio.HIGH --for the turn key
+vertical = gpio.LOW	 -- for the turn key
+
 st_status = gpio.LOW -- status of start lamp
 ht_status = gpio.LOW -- status of high traffic lamp
 running = false --stores a local state as a buffer
@@ -54,7 +57,7 @@ function get_app_status()
 		else
 			-- if api is accessible and blinky is still running, stop error blinky
 			-- reset flash_countdown, and grab the table
-			flash_countdown = 2
+			flash_countdown = 4
 			switchtable = sjson.decode(data)
 			blinking, mode = t_blink:state()
 			if blinking == true then
@@ -124,17 +127,18 @@ function blink() --blink led
 	gpio.write(ST_LAMP_PIN, st_status)
 end --end blinky function
 
-debouncer = 2
+st_debouncer = 2
+ht_debouncer = 15
 
 poll = function() --poll keys and do actions
 
 	if gpio.read(ST_KEY_PIN) == gpio.LOW then
-		debouncer = debouncer - 1
+		st_debouncer = st_debouncer - 1
 	else
-		debouncer = 2
+		st_debouncer = 2
 	end
 
-	if debouncer == 0 then
+	if st_debouncer == 0 then
 		if running == false then
 			http.post(run_5xb)
 		else
@@ -144,8 +148,22 @@ poll = function() --poll keys and do actions
 
 	-- check the traffic volume pin
 	if gpio.read(HT_KEY_PIN) == gpio.HIGH then
-		desired_load = "normal"
+		ht_debouncer = ht_debouncer + 1
 	else
+		ht_debouncer = ht_debouncer - 1
+	end
+
+	if ht_debouncer > 17 then
+			ht_debouncer = 17
+	end
+
+	if ht_debouncer < 13 then
+			ht_debouncer = 13
+	end
+
+	if ht_debouncer == 17 then
+		desired_load = "normal"
+	elseif ht_debouncer == 13 then
 		desired_load = "heavy"
 	end
 
