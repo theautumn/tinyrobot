@@ -17,7 +17,7 @@ HT_LAMP_PIN = 6 -- high traffic LAMP
 st_status = gpio.LOW -- status of start lamp
 ht_status = gpio.LOW -- status of high traffic lamp
 running = false --stores a local state as a buffer
-flash_countdown = 4 -- allows for a couple of no response before blink
+countdown = 4 -- allows for a couple of no response before blink
 desired_traffic  = "" -- traffic volume controlled by secondary key
 current_load  = "" -- traffic volume reported from API
 
@@ -39,7 +39,7 @@ function get_app_status()
 		-- If no response from HTTP after 3 tries, flash the light.
 		if (code < 0) then  -- if response empty
 			print("App status HTTP request failed")
-			if flash_countdown == 0 then -- if debouncer has run down
+			if countdown == 0 then -- if debouncer has run down
 				blinking, mode = t_blink:state()
 				print("Blinking " .. tostring(blinking))
 				-- if timer not already running
@@ -48,14 +48,14 @@ function get_app_status()
 					print("Blink start issued!")
 				end
 			else
-				flash_countdown = flash_countdown -1
-				print("Debounce counter: " .. tostring(flash_countdown))
+				countdown = countdown -1
+				print("Debounce counter: " .. tostring(countdown))
 			end
 		else
 			-- if api is accessible and blinky is still running, stop error blinky
-			-- reset flash_countdown, and grab the table
-			flash_countdown = 2
-			switchtable = sjson.decode(data)
+			-- reset countdown, and grab the table
+			countdown = 2
+			api_response = sjson.decode(data)
 			blinking, mode = t_blink:state()
 			if blinking == true then
 				t_blink:stop()
@@ -63,15 +63,15 @@ function get_app_status()
 			end
 
 			-- the API returns a table of tables so we have to use an index [1]
-			if switchtable[1]["running"] == true then
+			if api_response[1]["running"] == true then
 				gpio.write(ST_LAMP_PIN, gpio.LOW) -- lamp ON
 				running = true
-			elseif switchtable[1]["running"] == false then
+			elseif api_response[1]["running"] == false then
 				gpio.write(ST_LAMP_PIN, gpio.HIGH) -- lamp OFF
 				running = false
 			end --end running  checking loop
 
-			if switchtable[1]["traffic_load"] == "heavy" then
+			if api_response[1]["traffic_load"] == "heavy" then
 				gpio.write(HT_LAMP_PIN, gpio.LOW)
 				current_load = "heavy"
 			else
@@ -85,11 +85,11 @@ end --end get_app_status()
 
 function change_traffic_load(desired_load)
 	print("changing traffic load <<<<<<<<<")
-	if switchtable == nil or switchtable == {} then
-		print("________________switchtable empty")
+	if api_response == nil or api_response == {} then
+		print("________________api_response empty")
 		return 
 	end
-	for index, data in ipairs(switchtable) do
+	for index, data in ipairs(api_response) do
 		print(index)
 
 		for key, value in pairs(data) do

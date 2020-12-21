@@ -12,7 +12,7 @@ led_pin = 2
 key_pin = 1
 status = gpio.HIGH -- flashes lamp momentarily on start
 running = false --stores a local state as a buffer
-nope = 4 -- allows for a couple of no response before blink
+countdown = 4 -- allows for a couple of no response before blink
 
 -- set pin modes
 gpio.mode(led_pin, gpio.OUTPUT)
@@ -25,34 +25,34 @@ function get_from_api()
 	-- If no response from HTTP after 3 tries, flash the light.
 	if (code < 0) then	-- if response empty
 		print("HTTP request failed")
-		if nope == 0 then	-- if debounce counter has run down
+		if countdown == 0 then	-- if debounce counter has run down
 			blinking, mode = t_blink:state()
 			if blinking == false then	-- if timer not already running
 				t_blink:start()
 				print("Blink start issued!")
 			end
 		else
-			nope = nope - 1
-			print("Debounce counter: " .. tostring(nope))
+			countdown = countdown - 1
+			print("Debounce counter: " .. tostring(countdown))
 	  	end
 	else
-		nope = 2
+		countdown = 2
 		t_blink:stop()
-		local tabla = sjson.decode(data)
-		print("API Running " .. tostring(tabla["app_running"]))
-		print("1XB Running " .. tostring(tabla["xb1_running"]))
+		local api_response = sjson.decode(data)
+		print("API Running " .. tostring(api_response["app_running"]))
+		print("1XB Running " .. tostring(api_response["xb1_running"]))
 
 		-- if api is accessible and blinky is still running, stop error blinky
-		if tabla["app_running"] == true then
+		if api_response["app_running"] == true then
 			blinking, mode = t_blink:state()
 			if blinking == true then
 				t_blink:stop()
 				print("Blink *stop* issued")
 			end
-			if tabla["xb1_running"] == true then
+			if api_response["xb1_running"] == true then
 				gpio.write(led_pin, gpio.HIGH) -- lamp ON
 				running = true
-			elseif tabla["xb1_running"] == false then
+			elseif api_response["xb1_running"] == false then
 				gpio.write(led_pin, gpio.LOW) -- lamp OFF
 				running = false
 			end --end switch checking loop
