@@ -18,7 +18,7 @@ st_status = gpio.LOW -- status of start lamp
 ht_status = gpio.LOW -- status of high traffic lamp
 running = false --stores a local state as a buffer
 countdown = 4 -- allows for a couple of no response before blink
-desired_traffic  = "" -- traffic volume controlled by secondary key
+desired_load  = "" -- traffic volume controlled by secondary key
 current_load  = "" -- traffic volume reported from API
 
 -- set key pin modes

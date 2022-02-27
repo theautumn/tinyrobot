@@ -1,4 +1,4 @@
--- TinyRobot, a Lua script that makes API calls to 5xb_gen
+-- TinyRobot, a Lua script that makes API calls to panel_gen
 -- Sarah Autumn, 2019
 require "sjson"
 require "gpio"
@@ -21,8 +21,11 @@ st_status = gpio.LOW -- status of start lamp
 ht_status = gpio.LOW -- status of high traffic lamp
 running = false --stores a local state as a buffer
 countdown = 4 -- allows for a couple of no response before blink
-desired_traffic  = "" -- traffic volume controlled by secondary key
+desired_load  = "" -- traffic volume controlled by secondary key
 current_load  = "" -- traffic volume reported from API
+st_debouncer = 2    -- debounce for start key
+ht_debouncer = 15   -- debounce for high traffic key
+
 
 -- set key pin modes
 gpio.mode(ST_KEY_PIN, gpio.INPUT, gpio.PULLUP)
@@ -127,8 +130,6 @@ function blink() --blink led
 	gpio.write(ST_LAMP_PIN, st_status)
 end --end blinky function
 
-st_debouncer = 2
-ht_debouncer = 15
 
 poll = function() --poll keys and do actions
 
@@ -147,7 +148,7 @@ poll = function() --poll keys and do actions
 	end
 
 	-- check the traffic volume pin
-	if gpio.read(HT_KEY_PIN) == gpio.HIGH then
+	if gpio.read(HT_KEY_PIN) == horizontal then
 		ht_debouncer = ht_debouncer + 1
 	else
 		ht_debouncer = ht_debouncer - 1
