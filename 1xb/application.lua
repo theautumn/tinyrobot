@@ -23,7 +23,8 @@ ht_status = gpio.LOW -- status of high traffic lamp
 running = false --stores a local state as a buffer
 countdown = 4 -- allows for a couple of no response before blink
 desired_load  = "" -- traffic volume controlled by key
-current_load  = "normal" -- traffic volume reported from API
+current_load  = "" -- traffic volume reported from API
+load_timer = 1      -- spaces out HTTP PATCH events
 
 -- set key pin modes
 gpio.mode(ST_KEY_PIN, gpio.INPUT, gpio.PULLUP)
@@ -37,14 +38,12 @@ gpio.write(HT_LAMP_PIN, ht_status)
 
 
 function get_app_status()
-	print(">>>>>>>  get app status")
 	http.get(server,'',
 	function(code, data)
-		print("evaluating HTTP data")
+        print("  >>>>  get app status: " .. tostring(code))
 		-- If no response from HTTP after 3 tries, flash the light.
 		if (code < 0) then  -- if response empty
-			print("App status HTTP request failed")
-            print('Countdown '.. tostring(countdown))
+			print("App status HTTP request failed.")
 			if countdown == 0 then -- if debouncer has run down
 				blinking, mode = t_blink:state()
 				print("Blinking " .. tostring(blinking))
@@ -55,7 +54,7 @@ function get_app_status()
 				end
 			else
 				countdown = countdown -1
-				print("Debounce counter: " .. tostring(countdown))
+				print("Remaining attempts: " .. tostring(countdown))
 			end
 		else
 			-- if api is accessible and blinky is still running, stop error blinky
@@ -69,7 +68,7 @@ function get_app_status()
 			end
 
 			-- the API returns a table of tables so we have to use an index [1]
-            print(tostring(api_response[1]["running"]))
+            print("Call sim running: " .. tostring(api_response[1]["running"]))
 			if api_response[1]["running"] == true then
 				gpio.write(ST_LAMP_PIN, gpio.LOW) -- lamp ON
 				running = true
@@ -91,14 +90,12 @@ function get_app_status()
 end --end get_app_status()
 
 function change_traffic_load(desired_load)
-	print("changing traffic load <<<<<<<<<")
+	print("  >>>> changing traffic load to: " .. tostring(desired_load))
 	if api_response == nil or api_response == {} then
 		print("________________api_response empty")
 		return 
 	end
 	for index, data in ipairs(api_response) do
-		print(index)
-
 		for key, value in pairs(data) do
 			print('\t', key, value)
 		end
@@ -111,7 +108,7 @@ function change_traffic_load(desired_load)
 			'Content-Type: application/json\r\n',
 			'{"traffic_load": "'.. desired_load ..'"}',
 			function(code, data)
-				if (code < 0) then
+				if (code ~= 200) then
 					print("oh boy something fucked up")
 				elseif (code == 200) then
 					print("Business has been changed heck yeah!")
@@ -173,12 +170,19 @@ poll = function() --poll keys and do actions
 
 	-- if the now value is different than before value, make an API call
 	if desired_load ~= current_load then
-		print("Traffic load changing to: " .. tostring(desired_load))
-		change_traffic_load(desired_load)
- 	end
+        load_timer = load_timer + 1
+        if load_timer > 8 then
+            load_timer = 8
+        end
+        if load_timer == 8 then
+            print("Traffic load changing to: " .. tostring(desired_load))
+            change_traffic_load(desired_load)
+            load_timer = 1
+        end
+    end
 end
 
--- key polling function every .1 sec
+-- key polling function every .25 sec
 t_poll = tmr.create()
 t_poll:register(100, tmr.ALARM_AUTO, poll)
 t_poll:start()
